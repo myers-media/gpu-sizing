@@ -1,0 +1,17 @@
+2026-09-15 15:23:32.766 Uvicorn server started on 0.0.0.0:8765
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8765
+  Network URL: http://10.0.0.143:8765
+  External URL: http://73.115.236.212:8765
+
+  Stopping...
+2026-09-15 15:53:21.989 Uvicorn server started on 0.0.0.0:8765
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8765
+  Network URL: http://10.0.0.143:8765
+  External URL: http://73.115.236.212:8765
+
