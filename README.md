@@ -4,7 +4,7 @@ A TCO calculator in the spirit of AMD's [AI Cost Calculator](https://tokenomics.
 adapted for datacenter/consumer **GPUs**: size a GPU fleet for your AI workload and
 compare owned-hardware spend against cloud API spend over a chosen period.
 
-- **Port:** 8765 (bound to 0.0.0.0 so the second cluster box can reach it)
+- **Port:** 8765 (bound to 0.0.0.0 so other machines on the network can reach it)
 - **Stack:** Streamlit + Plotly, pure-Python calc engine (`gpu_sizing/calc.py`)
 
 ## What it does
@@ -62,13 +62,15 @@ break-even          = first month where cum_local ≤ cum_cloud
 
 ## Run
 
+From the repository root:
+
 ```bash
-bash /home/jeff/projects/gpu-sizing/start.sh     # idempotent, port 8765
-bash /home/jeff/projects/gpu-sizing/stop.sh
-tail -f /home/jeff/projects/gpu-sizing/gpu-sizing.log
+bash start.sh     # idempotent, port 8765
+bash stop.sh
+tail -f gpu-sizing.log
 ```
 
-Auto-starts on reboot via `@reboot /home/jeff/projects/gpu-sizing/start.sh` in crontab.
+Auto-starts on reboot via a crontab `@reboot` entry pointing at `start.sh`.
 
 ## Layout
 
