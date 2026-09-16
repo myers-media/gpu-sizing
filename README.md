@@ -34,6 +34,16 @@ compare owned-hardware spend against cloud API spend over a chosen period.
   - Monthly cost chart, fleet-size chart
   - Cost detail tables, 3-scenario break-even sensitivity, CSV export
 
+## Architecture
+
+![GPU sizing calculator architecture](docs/architecture.svg)
+
+*Browser preview: open `docs/architecture.html` in any browser (dark theme, no dependencies).*
+
+Key property: **no LLM inference at runtime** — the engine is pure deterministic
+Python. Cloud LLM APIs appear in the diagram only as a static pricing reference;
+the owned GPU fleet on the right is what the tool sizes, not something it calls.
+
 ## The math (same structure as AMD's tokenomics)
 
 ```
@@ -66,6 +76,8 @@ Auto-starts on reboot via `@reboot /home/jeff/projects/gpu-sizing/start.sh` in c
 app.py                 Streamlit UI
 gpu_sizing/data.py     cloud model prices, intensity presets, GPU presets
 gpu_sizing/calc.py     Demand / CloudPricing / GpuSpec / Ownership / simulate()
+docs/architecture.svg  architecture diagram (embedded above)
+docs/architecture.html browser preview of the diagram
 start.sh, stop.sh      lifecycle helpers (nohup + pidfile, curl readiness)
 ```
 

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPU Sizing Calculator — Architecture</title>
+<style>
+  body { margin:0; background:#020617; color:#e2e8f0;
+         font-family:'JetBrains Mono','Fira Code',Menlo,monospace; }
+  .wrap { max-width:1240px; margin:0 auto; padding:28px 20px; }
+  .pulse { display:inline-block; width:10px; height:10px; border-radius:50%;
+           background:#22d3ee; margin-right:10px; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.35 } }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:#94a3b8; font-size:12px; margin-bottom:22px; }
+  .diagram { border:1px solid #1e293b; border-radius:14px; overflow:hidden;
+              background:#020617; }
+  .diagram svg { display:block; width:100%; height:auto; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:18px; }
+  .card { border:1px solid #1e293b; border-radius:12px; padding:14px 16px;
+           background:#0f172a; }
+  .card h3 { margin:0 0 8px; font-size:13px; display:flex; align-items:center; }
+  .dot { width:9px; height:9px; border-radius:50%; margin-right:8px; }
+  .cyan { background:#22d3ee; } .emerald { background:#34d399; }
+  .amber { background:#fbbf24; }
+  .card ul { margin:0; padding-left:16px; }
+  .card li { font-size:11px; color:#94a3b8; margin-bottom:5px; line-height:1.5; }
+  footer { margin-top:22px; color:#475569; font-size:10px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="pulse"></span>GPU Sizing &amp; Cloud Savings Calculator — Architecture</h1>
+  <div class="sub">Streamlit TCO calculator · port 8765 · /home/jeff/projects/gpu-sizing</div>
+  <div class="diagram">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 790" font-family="'JetBrains Mono','Fira Code',Menlo,monospace">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arr-slate" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L8,3.5 L0,7 Z" fill="#cbd5e1"/>
+    </marker>
+    <marker id="arr-rose" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L8,3.5 L0,7 Z" fill="#fb7185"/>
+    </marker>
+    <marker id="arr-amber" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L8,3.5 L0,7 Z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="790" fill="#020617"/>
+  <rect width="1200" height="790" fill="url(#grid)"/>
+
+  <!-- title -->
+  <text x="40" y="44" font-size="12" font-weight="bold" fill="#e2e8f0">GPU Sizing &amp; Cloud Savings Calculator — Architecture</text>
+  <text x="1160" y="44" font-size="9" fill="#64748b" text-anchor="end">no LLM inference at runtime — pure deterministic math</text>
+
+  <!-- ================= connections (drawn early, behind boxes) ================= -->
+  <!-- browser <-> server -->
+  <line x1="600" y1="150" x2="600" y2="213" stroke="#cbd5e1" stroke-width="1.5" marker-start="url(#arr-slate)" marker-end="url(#arr-slate)"/>
+  <text x="612" y="186" font-size="8" fill="#94a3b8">HTTP :8765 + websocket</text>
+
+  <!-- app -> calc, app -> data, data -> calc -->
+  <line x1="480" y1="355" x2="465" y2="438" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+  <text x="470" y="400" font-size="8" fill="#94a3b8" text-anchor="end">build inputs → simulate()</text>
+  <line x1="680" y1="355" x2="780" y2="438" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+  <text x="760" y="390" font-size="8" fill="#94a3b8">load presets</text>
+  <line x1="680" y1="500" x2="632" y2="500" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+  <text x="656" y="492" font-size="8" fill="#94a3b8" text-anchor="middle">presets</text>
+
+  <!-- calc -> outputs -->
+  <line x1="465" y1="560" x2="465" y2="598" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+  <line x1="590" y1="560" x2="700" y2="598" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+
+  <!-- cloud (external, pricing only) -> engine -->
+  <line x1="260" y1="500" x2="298" y2="500" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arr-amber)"/>
+  <text x="279" y="514" font-size="8" fill="#fbbf24" text-anchor="middle">data only</text>
+
+  <!-- ops: start.sh -> process, crontab -> start.sh -->
+  <line x1="980" y1="310" x2="962" y2="310" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arr-rose)"/>
+  <text x="971" y="302" font-size="8" fill="#fb7185" text-anchor="middle">runs</text>
+  <line x1="1070" y1="405" x2="1070" y2="357" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arr-rose)"/>
+  <text x="1080" y="385" font-size="8" fill="#fb7185">reboot</text>
+
+  <!-- engine -> sizing target -->
+  <line x1="960" y1="560" x2="978" y2="560" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+
+  <!-- ================= server process region ================= -->
+  <rect x="280" y="215" width="680" height="475" rx="12" fill="rgba(120,53,15,0.06)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+  <text x="296" y="237" font-size="9" fill="#fbbf24">streamlit server process — python -m streamlit run app.py · 0.0.0.0:8765</text>
+
+  <!-- browser -->
+  <rect x="420" y="70" width="360" height="80" rx="6" fill="#0f172a"/>
+  <rect x="420" y="70" width="360" height="80" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="600" y="98" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">User's browser</text>
+  <text x="600" y="118" font-size="9" fill="#94a3b8" text-anchor="middle">Streamlit UI — Step 1: AI usage · Step 2: results</text>
+  <text x="600" y="134" font-size="9" fill="#94a3b8" text-anchor="middle">charts, KPIs, tables, CSV rendered here</text>
+
+  <!-- app.py -->
+  <rect x="420" y="265" width="360" height="90" rx="6" fill="#0f172a"/>
+  <rect x="420" y="265" width="360" height="90" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="600" y="293" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">app.py — Streamlit app</text>
+  <text x="600" y="313" font-size="9" fill="#94a3b8" text-anchor="middle">widget session · rerun on change</text>
+  <text x="600" y="329" font-size="9" fill="#94a3b8" text-anchor="middle">Plotly figures · metrics · CSV buffer</text>
+
+  <!-- calc.py -->
+  <rect x="300" y="440" width="330" height="120" rx="6" fill="#0f172a"/>
+  <rect x="300" y="440" width="330" height="120" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="465" y="466" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">gpu_sizing/calc.py</text>
+  <text x="465" y="482" font-size="9" fill="#94a3b8" text-anchor="middle">deterministic cost engine</text>
+  <text x="316" y="504" font-size="8" fill="#cbd5e1">fit: service_sec = in/in_tps + out/out_tps</text>
+  <text x="316" y="520" font-size="8" fill="#cbd5e1">gpus = ceil(service_sec / (duty_h·3600·util))</text>
+  <text x="316" y="536" font-size="8" fill="#cbd5e1">TCO = Σ(capex + opex) − terminal value</text>
+  <text x="316" y="552" font-size="8" fill="#cbd5e1">break-even: first month cum_local ≤ cum_cloud</text>
+
+  <!-- data.py -->
+  <rect x="680" y="440" width="250" height="120" rx="6" fill="#0f172a"/>
+  <rect x="680" y="440" width="250" height="120" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="805" y="466" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">gpu_sizing/data.py</text>
+  <text x="805" y="482" font-size="9" fill="#94a3b8" text-anchor="middle">static presets</text>
+  <text x="805" y="504" font-size="9" fill="#cbd5e1" text-anchor="middle">cloud $/Mtok (2026 list)</text>
+  <text x="805" y="522" font-size="9" fill="#cbd5e1" text-anchor="middle">intensity tiers (tok/day/user)</text>
+  <text x="805" y="540" font-size="9" fill="#cbd5e1" text-anchor="middle">GPU SKUs (price · W · tok/s)</text>
+
+  <!-- outputs -->
+  <rect x="300" y="600" width="330" height="66" rx="6" fill="#0f172a"/>
+  <rect x="300" y="600" width="330" height="66" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="465" y="628" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">Results — charts · KPIs · tables</text>
+  <text x="465" y="648" font-size="9" fill="#94a3b8" text-anchor="middle">cumulative cost · monthly · fleet size</text>
+
+  <rect x="680" y="600" width="250" height="66" rx="6" fill="#0f172a"/>
+  <rect x="680" y="600" width="250" height="66" rx="6" fill="rgba(251,146,60,0.3)" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="805" y="628" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">CSV export</text>
+  <text x="805" y="648" font-size="9" fill="#94a3b8" text-anchor="middle">monthly series download</text>
+
+  <!-- cloud LLM APIs (external, pricing reference only) -->
+  <rect x="40" y="440" width="220" height="120" rx="6" fill="#0f172a"/>
+  <rect x="40" y="440" width="220" height="120" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="150" y="468" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">Cloud LLM APIs</text>
+  <text x="150" y="490" font-size="9" fill="#94a3b8" text-anchor="middle">Claude Sonnet · Opus</text>
+  <text x="150" y="506" font-size="9" fill="#94a3b8" text-anchor="middle">GPT 5.5 · Gemini Pro</text>
+  <text x="150" y="534" font-size="8" fill="#64748b" text-anchor="middle">reference pricing only —</text>
+  <text x="150" y="548" font-size="8" fill="#64748b" text-anchor="middle">no runtime calls</text>
+
+  <!-- ops column -->
+  <rect x="980" y="265" width="180" height="90" rx="6" fill="#0f172a"/>
+  <rect x="980" y="265" width="180" height="90" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="1070" y="295" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">start.sh</text>
+  <text x="1070" y="315" font-size="9" fill="#94a3b8" text-anchor="middle">nohup · pidfile</text>
+  <text x="1070" y="331" font-size="9" fill="#94a3b8" text-anchor="middle">curl readiness probe</text>
+
+  <rect x="980" y="405" width="180" height="60" rx="6" fill="#0f172a"/>
+  <rect x="980" y="405" width="180" height="60" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="1070" y="431" font-size="11" font-weight="bold" fill="#e2e8f0" text-anchor="middle">crontab @reboot</text>
+  <text x="1070" y="449" font-size="8" fill="#94a3b8" text-anchor="middle">auto-start on boot</text>
+
+  <rect x="980" y="505" width="180" height="110" rx="6" fill="#0f172a"/>
+  <rect x="980" y="505" width="180" height="110" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="1070" y="533" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">Sizing target</text>
+  <text x="1070" y="553" font-size="9" fill="#94a3b8" text-anchor="middle">owned GPU fleet</text>
+  <text x="1070" y="571" font-size="9" fill="#cbd5e1" text-anchor="middle">GB10 · H100 · B200</text>
+  <text x="1070" y="587" font-size="9" fill="#cbd5e1" text-anchor="middle">RTX PRO 6000 · L40S</text>
+
+  <!-- legend (outside all boundaries, below region) -->
+  <rect x="40" y="715" width="14" height="14" rx="3" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="62" y="726" font-size="9" fill="#94a3b8">UI / frontend</text>
+  <rect x="180" y="715" width="14" height="14" rx="3" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="202" y="726" font-size="9" fill="#94a3b8">backend / compute</text>
+  <rect x="360" y="715" width="14" height="14" rx="3" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="382" y="726" font-size="9" fill="#94a3b8">static data</text>
+  <rect x="500" y="715" width="14" height="14" rx="3" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="522" y="726" font-size="9" fill="#94a3b8">external (no runtime calls)</text>
+  <rect x="730" y="715" width="14" height="14" rx="3" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="752" y="726" font-size="9" fill="#94a3b8">ops / lifecycle</text>
+  <text x="1160" y="726" font-size="9" fill="#64748b" text-anchor="end">port 8765 · /home/jeff/projects/gpu-sizing</text>
+</svg>
+
+  </div>
+  <div class="cards">
+    <div class="card">
+      <h3><span class="dot cyan"></span>UI layer</h3>
+      <ul>
+        <li>• Streamlit app (app.py) on 0.0.0.0:8765</li>
+        <li>• Step 1: usage, cloud pricing, coverage</li>
+        <li>• Step 2: GPU/power/ownership inputs</li>
+        <li>• Plotly charts, KPIs, tables, CSV export</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot emerald"></span>Cost engine</h3>
+      <ul>
+        <li>• gpu_sizing/calc.py — pure Python, no LLM</li>
+        <li>• GPU sizing: service-sec vs duty-sec fit</li>
+        <li>• TCO: cohort capex + opex − terminal value</li>
+        <li>• Cloud: $/Mtok × adjustments, break-even</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot amber"></span>Deployment</h3>
+      <ul>
+        <li>• start.sh: nohup, pidfile, readiness probe</li>
+        <li>• stop.sh: clean shutdown</li>
+        <li>• crontab @reboot auto-start</li>
+        <li>• Log: gpu-sizing.log (project dir)</li>
+      </ul>
+    </div>
+  </div>
+  <footer>generated 2026-09-15 · deterministic math only — no model inference at runtime</footer>
+</div>
+</body>
+</html>
